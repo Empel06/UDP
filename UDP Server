@@ -109,6 +109,9 @@ void execution(int internet_socket) {
         perror("setsockopt");
     }
 
+    int closest_guess = -1;
+    int closest_distance = 100; // Begin met een hoge waarde
+
     while (1) {
         int number_of_bytes_received = 0;
         char buffer[1000];
@@ -117,7 +120,11 @@ void execution(int internet_socket) {
         number_of_bytes_received = recvfrom(internet_socket, buffer, (sizeof buffer) - 1, 0, (struct sockaddr *)&client_internet_address, &client_internet_address_length);
         if (number_of_bytes_received == -1) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) { // Timeout occurred
-                printf("Timeout occurred! No guess received. The correct number was: %d\n", number_to_guess);
+                if (closest_guess != -1) {
+                    printf("You Won?\n");
+                } else {
+                    printf("You lost?\n");
+                }
                 break;
             } else {
                 perror("recvfrom");
@@ -126,6 +133,12 @@ void execution(int internet_socket) {
             buffer[number_of_bytes_received] = '\0';
             int client_guess = atoi(buffer); // converteer ontvangen gok naar integer
             printf("Received guess from client: %d\n", client_guess);
+            int distance = abs(client_guess - number_to_guess); // Afstand tot het te raden getal
+            if (distance < closest_distance) {
+                closest_guess = client_guess;
+                closest_distance = distance;
+            }
+
             compare_guess_with_number(client_guess, number_to_guess); // vergelijk gok met te raden getal
 
             // Halveer de timeout
