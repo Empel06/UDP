@@ -44,7 +44,9 @@ int main(int argc, char *argv[]) {
 
     int internet_socket = initialization();
 
-    execution(internet_socket);
+    while (1) {
+        execution(internet_socket);
+    }
 
     cleanup(internet_socket);
 
@@ -148,25 +150,6 @@ void execution(int internet_socket) {
             if (setsockopt(internet_socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout)) < 0) {
                 perror("setsockopt");
             }
-        }
-    }
-
-    // Blijf berichten ontvangen voor een bepaalde tijd na het selecteren van de winnaar
-    timeout.tv_sec = 16; // Stel een nieuwe time-out in van 16 seconden
-    while (1) {
-        int number_of_bytes_received = 0;
-        char buffer[1000];
-        struct sockaddr_storage client_internet_address;
-        socklen_t client_internet_address_length = sizeof(client_internet_address);
-        number_of_bytes_received = recvfrom(internet_socket, buffer, (sizeof buffer) - 1, 0, (struct sockaddr *)&client_internet_address, &client_internet_address_length);
-        if (number_of_bytes_received == -1) {
-            if (errno == EAGAIN || errno == EWOULDBLOCK) { // Timeout occurred
-                break; // Stop met ontvangen van berichten na de extra time-out
-            } else {
-                perror("recvfrom");
-            }
-        } else {
-            printf("You lost?\n");
         }
     }
 }
